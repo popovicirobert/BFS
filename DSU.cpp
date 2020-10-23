@@ -56,7 +56,7 @@ constexpr int MAXN = (1 << 16);
 constexpr int MAXM = (1 << 19);
 
 static pair<int, int> edge[MAXM];
-atomic<unsigned short> parent[MAXN];
+static unsigned short parent[MAXN], sz[MAXN];
 
 static inline void ReadInput(int& n, int& m) {
 	int a, b;
@@ -81,6 +81,7 @@ static inline void ReadInput(int& n, int& m) {
 	#pragma omp parallel for
 	for(int i = 0; i <= n; i++) {
 		parent[i] = -1;
+		sz[i] = 1;
 	}
 
 }
@@ -88,7 +89,7 @@ static inline void ReadInput(int& n, int& m) {
 constexpr int BUCKET_SIZE = 6; // 1 << 6 = 64
 
 
-inline unsigned short GetRoot(unsigned short nod) {
+static inline unsigned short GetRoot(unsigned short nod) {
 	unsigned short root = nod;
 	while(parent[root] < (unsigned short)-1) {
 		root = parent[root];	
@@ -102,23 +103,25 @@ inline unsigned short GetRoot(unsigned short nod) {
 	return root;
 }
 
-/*unsigned short GetRoot(unsigned short nod) {
-	return (parent[nod] == (unsigned short)-1 ? nod : parent[nod] = GetRoot(parent[nod]));
-}*/
 
-inline void Join(unsigned short x, unsigned short y) {
+static inline void Join(unsigned short x, unsigned short y) {
 	x = GetRoot(x);
 	y = GetRoot(y);
 
+	if(sz[x] > sz[y]) {
+		swap(x, y);
+	}
+
 	if(x != y) {
 		parent[x] = y;
+		sz[y] += sz[x];
 	}
 }
 
 
 unsigned long long visited[MAXN >> BUCKET_SIZE];
 
-inline void VisitNode(const unsigned short nod) {
+static inline void VisitNode(const unsigned short nod) {
 	const unsigned short id = (nod >> BUCKET_SIZE);
 	const char rem = (nod & ((1 << BUCKET_SIZE) - 1));
 	visited[id] |= (1llu << rem);
@@ -126,15 +129,12 @@ inline void VisitNode(const unsigned short nod) {
 
 
 static inline void Solve(int n, int m) {	
-	#pragma omp parallel for
 	for(int i = 0; i < m; i++) {
 		Join(edge[i].first, edge[i].second);
 	}
 
-
 	unsigned short root = GetRoot(0);
 
-	#pragma omp parallel for
 	for(int i = 0; i <= n; i++) {
 		unsigned short cur = GetRoot(i);
 		if(cur == root) {
