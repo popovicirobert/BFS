@@ -53,7 +53,7 @@ static inline const int GetNr() {
 
 
 constexpr int MAXN = (1 << 16);
-constexpr int MAXM = (1 << 19);
+constexpr int MAXM = (int)5e6 + 5;
 
 static pair<int, int> edge[MAXM];
 static unsigned short parent[MAXN], sz[MAXN];

@@ -1,4 +1,8 @@
 #include <cstdio>
+#include <cstdlib>
+#include <atomic>
+#include <utility>
+#include <cstring>
 #include <iostream>
 
 #ifdef HOME
@@ -10,23 +14,13 @@ using namespace std;
 
 
 constexpr int MAXBUF = (1 << 17);
-//constexpr int SIGMA = 256;
 
 static char buf[MAXBUF];
 int pbuf;
 
-//static bool chars[SIGMA];
-
 static inline void Init() {
 	pbuf = MAXBUF;
-	/*for(char ch = '0'; ch <= '9'; ch++) {
-		chars[ch] = true;
-	}*/
 }
-
-/*static inline const bool isdigit(char ch) {
-	return chars[ch];
-}*/
 
 static inline const char NextCh() {
 	if(pbuf == MAXBUF) {
@@ -59,17 +53,10 @@ static inline const int GetNr() {
 
 
 constexpr int MAXN = (1 << 16);
-constexpr int MAXM = (1 << 19);
+constexpr int MAXM = (int)5e6 + 5;
 
-static int degree[MAXN];
-static unsigned short* graph[MAXN];
-static pair<unsigned short, unsigned short> edge[MAXM];
-
-
-/*static inline const int max(int a, int b) {
-	if(a < b) return b;
-	return a;
-}*/
+static pair<int, int> edge[MAXM];
+static unsigned short parent[MAXN], sz[MAXN];
 
 static inline void ReadInput(int& n, int& m) {
 	int a, b;
@@ -85,71 +72,76 @@ static inline void ReadInput(int& n, int& m) {
 			#ifdef HOME
 				assert(b > -1);	
 			#endif
-
-			++degree[a];
-			++degree[b];
-
-			edge[m] = {a, b};
-			++m;
-
+				
+			edge[m++] = {a, b};
 			n = max(n, max(a, b));
-		}
-	}	
-	
+		}	
+	}
+
 	#pragma omp parallel for
-	for(int i = 0; i <= n; ++i) {
-		if(degree[i]) {
-			graph[i] = new unsigned short[degree[i]];
-			degree[i] = 0;
-		}
+	for(int i = 0; i <= n; i++) {
+		parent[i] = -1;
+		sz[i] = 1;
 	}
 
-	for(int i = 0; i < m; ++i) {
-		graph[edge[i].first][degree[edge[i].first]] = edge[i].second;
-		++degree[edge[i].first];
-		graph[edge[i].second][degree[edge[i].second]] = edge[i].first;
-		++degree[edge[i].second];
+}
+
+constexpr int BUCKET_SIZE = 6; // 1 << 6 = 64
+
+
+static inline unsigned short GetRoot(unsigned short nod) {
+	unsigned short root = nod;
+	while(parent[root] < (unsigned short)-1) {
+		root = parent[root];	
+	}
+	unsigned short cur;
+	while(parent[nod] < (unsigned short)-1) {
+		cur = parent[nod];
+		parent[nod] = root;
+		nod = cur;
+	}
+	return root;
+}
+
+
+static inline void Join(unsigned short x, unsigned short y) {
+	x = GetRoot(x);
+	y = GetRoot(y);
+
+	if(sz[x] > sz[y]) {
+		swap(x, y);
+	}
+
+	if(x != y) {
+		parent[x] = y;
+		sz[y] += sz[x];
 	}
 }
 
 
-static unsigned short visited[2][MAXN];
+unsigned long long visited[MAXN >> BUCKET_SIZE];
 
-
-static inline void Solve(int n, int m) {
-
-	unsigned short dist = 1;
-	visited[0][0] = 1;
-
-	bool found = true;
-
-	while(found) {
-		found = false;	
-
-		#pragma omp parallel for
-		for(int nod = 0; nod <= n; nod++) {
-			if(visited[0][nod] == dist) {
-				//#pragma omp parallel for
-				for(int i = 0; i < degree[nod]; i++) {
-					if(visited[0][graph[nod][i]] == 0) {
-						visited[1][graph[nod][i]] = dist + 1;
-						found = true;
-					}
-				}
-			}
-		}
-
-		#pragma omp parallel for
-		for(int nod = 0; nod <= n; nod++) {
-			if(visited[1][nod]) {
-				visited[0][nod] = visited[1][nod];
-			}
-		}
-
-		dist++;
-	}
+static inline void VisitNode(const unsigned short nod) {
+	const unsigned short id = (nod >> BUCKET_SIZE);
+	const char rem = (nod & ((1 << BUCKET_SIZE) - 1));
+	visited[id] |= (1llu << rem);
 }
 
+
+static inline void Solve(int n, int m) {	
+	for(int i = 0; i < m; i++) {
+		Join(edge[i].first, edge[i].second);
+	}
+
+	unsigned short root = GetRoot(0);
+
+	for(int i = 0; i <= n; i++) {
+		unsigned short cur = GetRoot(i);
+		if(cur == root) {
+			VisitNode(i);
+		}
+	}
+}
 
 
 static inline void PrintSol(int n, int m) {
@@ -157,14 +149,21 @@ static inline void PrintSol(int n, int m) {
 
 	printf("[");
 	
-	for(int i = 0; i <= n; i++) {
+	const int lim = (n >> BUCKET_SIZE) + 1;
+	int bit;
+	
+	for(int i = 0; i < lim; ++i) {
 		if(visited[i]) {
-			if(first) {
-				first = false;
-				printf("%hd", i);
-			}
-			else {
-				printf(",%hd", i);
+			for(bit = 0; bit < (1 << BUCKET_SIZE); ++bit) {
+				if(visited[i] & (1llu << bit)) {
+					if(first) {
+						printf("%hd", (i << BUCKET_SIZE) + bit);
+						first = false;
+					}
+					else {
+						printf(",%hd", (i << BUCKET_SIZE) + bit);
+					}
+				}
 			}
 		}
 	}
