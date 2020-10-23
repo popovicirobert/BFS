@@ -3,9 +3,9 @@
 #include <atomic>
 #include <utility>
 #include <cstring>
+#include <iostream>
 
 #ifdef HOME
-	#include <iostream>
 	#include <cassert>
 #endif
 
