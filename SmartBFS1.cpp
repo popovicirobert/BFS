@@ -100,7 +100,7 @@ static inline void ReadInput(int& n, int& m) {
 constexpr int BUCKET_SIZE = 6; // 1 << 6 = 64
 
 static atomic<unsigned long long> visited[MAXN / (1 << BUCKET_SIZE)];
-static atomic<unsigned short> nodes[2][MAXN];
+static unsigned short nodes[2][MAXN];
 
 static inline const bool isVisited(const unsigned short nod) {
 	const unsigned short id = (nod >> BUCKET_SIZE);
