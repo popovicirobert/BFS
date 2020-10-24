@@ -10,23 +10,15 @@ using namespace std;
 
 
 constexpr int MAXBUF = (1 << 17);
-//constexpr int SIGMA = 256;
 
 static char buf[MAXBUF];
 int pbuf;
 
-//static bool chars[SIGMA];
 
 static inline void Init() {
 	pbuf = MAXBUF;
-	/*for(char ch = '0'; ch <= '9'; ch++) {
-		chars[ch] = true;
-	}*/
 }
 
-/*static inline const bool isdigit(char ch) {
-	return chars[ch];
-}*/
 
 static inline const char NextCh() {
 	if(pbuf == MAXBUF) {
@@ -66,11 +58,6 @@ static unsigned short* graph[MAXN];
 static pair<unsigned short, unsigned short> edge[MAXM];
 
 
-/*static inline const int max(int a, int b) {
-	if(a < b) return b;
-	return a;
-}*/
-
 static inline void ReadInput(int& n, int& m) {
 	int a, b;
 
@@ -87,7 +74,6 @@ static inline void ReadInput(int& n, int& m) {
 			#endif
 
 			++degree[a];
-			//++degree[b];
 
 			edge[m] = {a, b};
 			++m;
@@ -107,8 +93,6 @@ static inline void ReadInput(int& n, int& m) {
 	for(int i = 0; i < m; ++i) {
 		graph[edge[i].first][degree[edge[i].first]] = edge[i].second;
 		++degree[edge[i].first];
-		//graph[edge[i].second][degree[edge[i].second]] = edge[i].first;
-		//++degree[edge[i].second];
 	}
 }
 
@@ -129,7 +113,6 @@ static inline void Solve(int n, int m) {
 		#pragma omp parallel for
 		for(int nod = 0; nod <= n; nod++) {
 			if(visited[0][nod] == dist) {
-				//#pragma omp parallel for
 				for(int i = 0; i < degree[nod]; i++) {
 					if(visited[0][graph[nod][i]] == 0) {
 						visited[1][graph[nod][i]] = dist + 1;

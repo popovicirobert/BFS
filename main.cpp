@@ -119,7 +119,6 @@ static inline void Solve(int n, int m) {
 	Q.push(0);
 	visited[0] = 1;
 
-	printf("[0");
 
 	while(Q.size()) {
 		int nod = Q.front();
@@ -129,13 +128,11 @@ static inline void Solve(int n, int m) {
 			int it = graph[nod][i];
 			if(visited[it] == 0) {	
 				visited[it] = 1;
-				printf(",%hd" ,it);
 				Q.push(it);
 			}
 		}
 	}
 
-	printf("]");
 }
 
 
@@ -170,7 +167,7 @@ int main() {
 
 	Solve(n, m);
 
-	//PrintSol(n, m);
+	PrintSol(n, m);
 
 	return 0;
 }
