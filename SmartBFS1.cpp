@@ -107,8 +107,8 @@ static inline void ReadInput(int& n, int& m) {
 	for(int i = 0; i < m; ++i) {
 		graph[edge[i].first][degree[edge[i].first]] = edge[i].second;
 		++degree[edge[i].first];
-		graph[edge[i].second][degree[edge[i].second]] = edge[i].first;
-		++degree[edge[i].second];
+		//graph[edge[i].second][degree[edge[i].second]] = edge[i].first;
+		//++degree[edge[i].second];
 	}
 }
 
@@ -186,3 +186,4 @@ int main() {
 
 	return 0;
 }
+
