@@ -1,5 +1,6 @@
 #include <cstdio>
 #include <iostream>
+#include <queue>
 
 #ifdef HOME
 	#include <cassert>
@@ -87,7 +88,6 @@ static inline void ReadInput(int& n, int& m) {
 			#endif
 
 			++degree[a];
-			//++degree[b];
 
 			edge[m] = {a, b};
 			++m;
@@ -96,7 +96,6 @@ static inline void ReadInput(int& n, int& m) {
 		}
 	}	
 	
-	#pragma omp parallel for
 	for(int i = 0; i <= n; ++i) {
 		if(degree[i]) {
 			graph[i] = new unsigned short[degree[i]];
@@ -107,47 +106,35 @@ static inline void ReadInput(int& n, int& m) {
 	for(int i = 0; i < m; ++i) {
 		graph[edge[i].first][degree[edge[i].first]] = edge[i].second;
 		++degree[edge[i].first];
-		//graph[edge[i].second][degree[edge[i].second]] = edge[i].first;
-		//++degree[edge[i].second];
 	}
 }
 
 
-static unsigned short visited[2][MAXN];
+static bool visited[MAXN];
 
 
 static inline void Solve(int n, int m) {
 
-	unsigned short dist = 1;
-	visited[0][0] = 1;
+	queue<unsigned short> Q;
+	Q.push(0);
+	visited[0] = 1;
 
-	bool found = true;
+	printf("[0");
 
-	while(found) {
-		found = false;	
+	while(Q.size()) {
+		int nod = Q.front();
+		Q.pop();
 
-		#pragma omp parallel for
-		for(int nod = 0; nod <= n; nod++) {
-			if(visited[0][nod] == dist) {
-				//#pragma omp parallel for
-				for(int i = 0; i < degree[nod]; i++) {
-					if(visited[0][graph[nod][i]] == 0) {
-						visited[1][graph[nod][i]] = dist + 1;
-						found = true;
-					}
-				}
+		for(int i = 0; i < degree[nod]; i++) {
+			int it = graph[nod][i];
+			if(visited[it] == 0) {	
+				visited[it] = 1;
+				printf(",%hd" ,it);
 			}
 		}
-
-		#pragma omp parallel for
-		for(int nod = 0; nod <= n; nod++) {
-			if(visited[1][nod]) {
-				visited[0][nod] = visited[1][nod];
-			}
-		}
-
-		dist++;
 	}
+
+	printf("]");
 }
 
 
@@ -182,7 +169,7 @@ int main() {
 
 	Solve(n, m);
 
-	PrintSol(n, m);
+	//PrintSol(n, m);
 
 	return 0;
 }
