@@ -99,7 +99,7 @@ static inline void Solve(int n, int m) {
 	
 	int pos;
 
-	while(l < r && r < n) {
+	while(l < r && r <= n) {
 		pos = last[Q[l]];
 		++l;
 
