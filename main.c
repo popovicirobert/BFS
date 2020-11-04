@@ -2,7 +2,7 @@
 #include <string.h>
 
 
-#define MAXBUF (1 << 17)
+#define MAXBUF (1 << 18) // am pus 2 ^ 18
 
 static char buf[MAXBUF];
 int pbuf;
@@ -21,14 +21,14 @@ static inline const char NextCh() {
 	return buf[pbuf++];
 }
 
-static inline const unsigned short GetNr() {
+static inline const short GetNr() {
 	char ch = NextCh();
 	while(!isdigit(ch) && ch != ']') {
 		ch = NextCh();
 	}
 
 	if(isdigit(ch)) {
-		unsigned short ans = 0;
+		short ans = 0;
 
 		do {
 			ans = ans * 10 + ch - '0';
@@ -43,42 +43,40 @@ static inline const unsigned short GetNr() {
 
 
 
-#define MAXN (1 << 16)
+#define MAXN (1 << 15) // consideram ca numeerele sunt pe short
 #define MAXM (int)(5e6 + 5)
 
-static unsigned short x[MAXM], y[MAXM];
+static short x[MAXM], y[MAXM];
 static int nxt[MAXM], last[MAXN];
 
-static inline const unsigned short max(unsigned short a,unsigned short b) {
+static inline const short max(short a, short b) {
 	if(a < b) return b;
 	return a;
 }
 
+int n, m;
 
-static inline void ReadInput(int* n, int* m) {
-	unsigned short a, b;
 
-	*n = *m = 0;
+static inline void ReadInput() {
+	short a, b;
+
+	n = m = 0;
 	a = 0;
 
-	while(a < (unsigned short)-1) {
+	while(a > -1) {
 		a = GetNr();
-		if(a < (unsigned short)-1) {
+		if(a > -1) {
 			b = GetNr();
 
-			#ifdef HOME
-				assert(b < (unsigned short)-1);	
-			#endif
-
-			++(*m);	
-			x[*m] = a;
-			y[*m] = b;
+			++m;	
+			x[m] = a;
+			y[m] = b;
 			
-			*n = max(*n, max(a, b));
+			n = max(n, max(a, b));
 		}
 	}	
 	
-	for(int i = *m; i >= 1; --i) {
+	for(int i = m; i >= 1; --i) {
 		nxt[i] = last[x[i]];
 		last[x[i]] = i;
 	}
@@ -86,12 +84,12 @@ static inline void ReadInput(int* n, int* m) {
 
 
 static char visited[MAXN];
-static unsigned short Q[MAXN];
+static short Q[MAXN];
 
 
-static inline void Solve(int n, int m) {
+static inline void Solve() {
 
-	unsigned short l = 0, r = 1;
+	short l = 0, r = 1;
 	Q[0] = 0;
 	visited[0] = 1;
 
@@ -99,7 +97,7 @@ static inline void Solve(int n, int m) {
 	
 	int pos;
 
-	while(l < r && r <= n) {
+	while(l < r) {
 		pos = last[Q[l]];
 		++l;
 
@@ -123,10 +121,9 @@ int main() {
 
 	Init();
 
-	int n, m;
-	ReadInput(&n, &m);
+	ReadInput();
 
-	Solve(n, m);
+	Solve();
 
 	return 0;
 }
