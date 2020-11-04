@@ -21,14 +21,14 @@ static inline const char NextCh() {
 	return buf[pbuf++];
 }
 
-static inline const int GetNr() {
+static inline const unsigned short GetNr() {
 	char ch = NextCh();
 	while(!isdigit(ch) && ch != ']') {
 		ch = NextCh();
 	}
 
 	if(isdigit(ch)) {
-		int ans = 0;
+		unsigned short ans = 0;
 
 		do {
 			ans = ans * 10 + ch - '0';
@@ -56,18 +56,18 @@ static inline const unsigned short max(unsigned short a,unsigned short b) {
 
 
 static inline void ReadInput(int* n, int* m) {
-	int a, b;
+	unsigned short a, b;
 
 	*n = *m = 0;
 	a = 0;
 
-	while(a > -1) {
+	while(a < (unsigned short)-1) {
 		a = GetNr();
-		if(a > -1) {
+		if(a < (unsigned short)-1) {
 			b = GetNr();
-			
+
 			#ifdef HOME
-				assert(b > -1);	
+				assert(b < (unsigned short)-1);	
 			#endif
 
 			++(*m);	
@@ -78,7 +78,7 @@ static inline void ReadInput(int* n, int* m) {
 		}
 	}	
 	
-	for(int i = *m; i >= 1; i--) {
+	for(int i = *m; i >= 1; --i) {
 		nxt[i] = last[x[i]];
 		last[x[i]] = i;
 	}
@@ -99,7 +99,7 @@ static inline void Solve(int n, int m) {
 	
 	int pos;
 
-	while(l < r) {
+	while(l < r && r < n) {
 		pos = last[Q[l]];
 		++l;
 
