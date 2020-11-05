@@ -1,15 +1,9 @@
-#include <cstdio>
-#include <iostream>
+#include <stdio.h>
+#include <string.h>
+#include <future>
 
-#ifdef HOME
-	#include <cassert>
-#endif
-
-
-using namespace std;
-
-
-constexpr int MAXBUF = (1 << 17);
+#define MAXBUF (1 << 17)
+#define SIGMA 256
 
 static char buf[MAXBUF];
 int pbuf;
@@ -19,7 +13,6 @@ static inline void Init() {
 	pbuf = MAXBUF;
 }
 
-
 static inline const char NextCh() {
 	if(pbuf == MAXBUF) {
 		fread(buf, 1, MAXBUF, stdin);
@@ -28,14 +21,14 @@ static inline const char NextCh() {
 	return buf[pbuf++];
 }
 
-static inline const int GetNr() {
+static inline const short GetNr() { 
 	char ch = NextCh();
 	while(!isdigit(ch) && ch != ']') {
 		ch = NextCh();
 	}
 
 	if(isdigit(ch)) {
-		int ans = 0;
+		short ans = 0;
 
 		do {
 			ans = ans * 10 + ch - '0';
@@ -49,85 +42,127 @@ static inline const int GetNr() {
 }
 
 
+#define MAXN (1 << 15) // consideram ca numerele sunt pe short
+#define MAXM (int)(5e6 + 5)
 
-constexpr int MAXN = (1 << 16);
-constexpr int MAXM = (int)5e6 + 5;
+static short x[MAXM], y[MAXM];
+static int nxt[MAXM], last[MAXN];
 
-static int degree[MAXN];
-static unsigned short* graph[MAXN];
-static pair<unsigned short, unsigned short> edge[MAXM];
+static inline int max(const int a, const int b) {
+	if(a > b) return a;
+	return b;
+}
 
+static inline int min(const int a, const int b) {
+	if(a < b) return a;
+	return b;
+}
 
-static inline void ReadInput(int& n, int& m) {
-	int a, b;
+short n;
+int m;
 
-	n = m = 0;
-	a = 0;
+short func(int l, int r) {
+	int ans = 0;
+	for(int i = l; i <= r; ++i) {
+		ans = max(ans, max(x[i], y[i]));
+	}
+	return ans;
+}
 
-	while(a > -1) {
-		a = GetNr();
-		if(a > -1) {
-			b = GetNr();
-			
-			#ifdef HOME
-				assert(b > -1);	
-			#endif
+static inline void ReadInput() {
 
-			++degree[a];
-
-			edge[m] = {a, b};
-			++m;
-
-			n = max(n, max(a, b));
+	while(1) {
+		++m;
+		x[m] = GetNr();
+		if(x[m] > -1) {
+			y[m] = GetNr();
+		}
+		else {
+			break;
 		}
 	}	
-	
-	#pragma omp parallel for
-	for(int i = 0; i <= n; ++i) {
-		if(degree[i]) {
-			graph[i] = new unsigned short[degree[i]];
-			degree[i] = 0;
-		}
-	}
+	m--;
 
-	for(int i = 0; i < m; ++i) {
-		graph[edge[i].first][degree[edge[i].first]] = edge[i].second;
-		++degree[edge[i].first];
+	int len = m / 90 + 1;
+	for(int i = 0; i * len < m; i++) {
+		int l = i * len + 1;
+		int r = min((i + 1) * len, m);
+		auto cur = std::async(std::launch::async, func, l, r);
+		n = max(n, cur.get());
+	}
+	
+	for(int i = m; i >= 1; --i) {
+		nxt[i] = last[x[i]];
+		last[x[i]] = i;
 	}
 }
 
 
-static bool visited[MAXN];
-static unsigned short Q[MAXN];
+static char visited[MAXN];
+static short Q[MAXN];
+
+int sz = 0;
+
+static inline void AddChar(const char ch) {
+	buf[sz++] = ch;
+	if(sz == MAXBUF) {
+		fwrite(buf, 1, MAXBUF, stdout);
+		sz = 0;
+	}
+}
 
 
-static inline void Solve(int n, int m) {
+static inline void Solve() {
 
-	
-	printf("%d %d\n", n, m);
-
-	unsigned short l = 0, r = 1;
+	short l = 0, r = 1;
 	Q[0] = 0;
 	visited[0] = 1;
 
-	printf("[0");
+	AddChar('[');
+	AddChar('0');
 	
-	unsigned short nod, it;
-	int i;
+	int pos;
 
 	while(l < r) {
-		nod = Q[l++];
+		pos = last[Q[l]];
+		++l;
 
-		for(i = 0; i < degree[nod]; i++) {
-			it = graph[nod][i];
-			if(visited[it] == 0) {	
-				visited[it] = 1;
-				Q[r++] = it;
-				printf(",%hd", it);
+		while(pos) {
+			if(visited[y[pos]] == 0) {
+				visited[y[pos]] = 1;
+				Q[r] = y[pos];
+				++r;
+
+				AddChar(',');
+
+				if(y[pos] == 0) {
+					AddChar('0');
+				}
+				else {
+					short cur = y[pos];
+					for(short pw = 10000; pw >= 1; pw /= 10) {
+						if(cur >= pw) {
+							AddChar('0' + (cur / pw) % 10);
+						}
+					}
+				}
+
+				if(r == n + 1) {
+					AddChar(']');
+					if(sz) {
+						fwrite(buf, 1, sz, stdout);
+					}
+					return;
+				}
 			}
+			pos = nxt[pos];
 		}
 	}
-	printf("]");
+	AddChar(']');
+
+	if(sz) {
+		fwrite(buf, 1, sz, stdout);
+	}
 }
 
 
@@ -136,10 +171,9 @@ int main() {
 
 	Init();
 
-	int n, m;
-	ReadInput(n, m);
+	ReadInput();
 
-	Solve(n, m);
+	Solve();
 
 	return 0;
 }
