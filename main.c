@@ -66,8 +66,6 @@ static inline void ReadInput() {
 		x[m] = GetNr();
 		if(x[m] > -1) {
 			y[m] = GetNr();
-			if(n < x[m]) n = x[m]; // daca nu folosim n putem sa scoatem if-urile
-			if(n < y[m]) n = y[m];
 		}
 		else {
 			break;
@@ -107,11 +105,6 @@ static inline void Solve() {
 				++r;
 
 				printf(",%hd", y[pos]);
-
-				if(r == n + 1) { // s-ar putea sa mareasca timpul ????
-					printf("]");
-					return ;
-				}
 			}
 			pos = nxt[pos];
 		}
