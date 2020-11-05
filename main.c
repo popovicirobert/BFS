@@ -7,20 +7,9 @@
 static char buf[MAXBUF];
 int pbuf;
 
-//static char notDigit[SIGMA];
-//static char isDigit[SIGMA];
 
 static inline void Init() {
 	pbuf = MAXBUF;
-	
-	/*for(int ch = 0; ch < SIGMA; ch++) {
-		notDigit[ch] = 1;
-	}
-	notDigit[']'] = 0;
-	for(int ch = '0'; ch <= '9'; ch++) {
-		isDigit[ch] = 1;
-		notDigit[ch] = 0;
-	}*/	
 }
 
 static inline const char NextCh() {
@@ -31,7 +20,7 @@ static inline const char NextCh() {
 	return buf[pbuf++];
 }
 
-static inline const short GetNr() { // am inlocuit isdigit cu isDigit si notDigit
+static inline const short GetNr() { 
 	char ch = NextCh();
 	while(!isdigit(ch) && ch != ']') {
 		ch = NextCh();
@@ -84,6 +73,16 @@ static inline void ReadInput() {
 static char visited[MAXN];
 static short Q[MAXN];
 
+int sz = 0;
+
+static inline void AddChar(const char ch) {
+	buf[sz++] = ch;
+	if(sz == MAXBUF) {
+		fwrite(buf, 1, MAXBUF, stdout);
+		sz = 0;
+	}
+}
+
 
 static inline void Solve() {
 
@@ -91,7 +90,8 @@ static inline void Solve() {
 	Q[0] = 0;
 	visited[0] = 1;
 
-	printf("[0");
+	AddChar('[');
+	AddChar('0');
 	
 	int pos;
 
@@ -105,12 +105,28 @@ static inline void Solve() {
 				Q[r] = y[pos];
 				++r;
 
-				printf(",%hd", y[pos]);
+				AddChar(',');
+
+				if(y[pos] == 0) {
+					AddChar('0');
+				}
+				else {
+					short cur = y[pos];
+					for(short pw = 10000; pw >= 1; pw /= 10) {
+						if(cur >= pw) {
+							AddChar('0' + (cur / pw) % 10);
+						}
+					}
+				}
 			}
 			pos = nxt[pos];
 		}
 	}
-	printf("]");
+	AddChar(']');
+
+	if(sz) {
+		fwrite(buf, 1, sz, stdout);
+	}
 }
 
 
