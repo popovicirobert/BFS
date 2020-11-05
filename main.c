@@ -1,25 +1,26 @@
 #include <stdio.h>
+#include <string.h>
 
-#define MAXBUF (1 << 18) // am pus 2 ^ 18
+#define MAXBUF (1 << 17)
 #define SIGMA 256
 
 static char buf[MAXBUF];
 int pbuf;
 
-static char notDigit[SIGMA];
-static char isDigit[SIGMA];
+//static char notDigit[SIGMA];
+//static char isDigit[SIGMA];
 
 static inline void Init() {
 	pbuf = MAXBUF;
 	
-	for(int ch = 0; ch < SIGMA; ch++) {
+	/*for(int ch = 0; ch < SIGMA; ch++) {
 		notDigit[ch] = 1;
 	}
 	notDigit[']'] = 0;
 	for(int ch = '0'; ch <= '9'; ch++) {
 		isDigit[ch] = 1;
 		notDigit[ch] = 0;
-	}	
+	}*/	
 }
 
 static inline const char NextCh() {
@@ -32,17 +33,17 @@ static inline const char NextCh() {
 
 static inline const short GetNr() { // am inlocuit isdigit cu isDigit si notDigit
 	char ch = NextCh();
-	while(notDigit[ch]) {
+	while(!isdigit(ch) && ch != ']') {
 		ch = NextCh();
 	}
 
-	if(isDigit[ch]) {
+	if(isdigit(ch)) {
 		short ans = 0;
 
 		do {
 			ans = ans * 10 + ch - '0';
 			ch = NextCh();
-		} while(isDigit[ch]);
+		} while(isdigit(ch));
 
 		return ans;
 	}
