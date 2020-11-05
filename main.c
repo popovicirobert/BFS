@@ -1,17 +1,26 @@
 #include <stdio.h>
-#include <string.h>
-
 
 #define MAXBUF (1 << 18) // am pus 2 ^ 18
+#define SIGMA 256
 
 static char buf[MAXBUF];
 int pbuf;
 
+static char notDigit[SIGMA];
+static char isDigit[SIGMA];
 
 static inline void Init() {
 	pbuf = MAXBUF;
+	
+	for(int ch = 0; ch < SIGMA; ch++) {
+		notDigit[ch] = 1;
+	}
+	notDigit[']'] = 0;
+	for(int ch = '0'; ch <= '9'; ch++) {
+		isDigit[ch] = 1;
+		notDigit[ch] = 0;
+	}	
 }
-
 
 static inline const char NextCh() {
 	if(pbuf == MAXBUF) {
@@ -21,19 +30,19 @@ static inline const char NextCh() {
 	return buf[pbuf++];
 }
 
-static inline const short GetNr() {
+static inline const short GetNr() { // am inlocuit isdigit cu isDigit si notDigit
 	char ch = NextCh();
-	while(!isdigit(ch) && ch != ']') {
+	while(notDigit[ch]) {
 		ch = NextCh();
 	}
 
-	if(isdigit(ch)) {
+	if(isDigit[ch]) {
 		short ans = 0;
 
 		do {
 			ans = ans * 10 + ch - '0';
 			ch = NextCh();
-		} while(isdigit(ch));
+		} while(isDigit[ch]);
 
 		return ans;
 	}
@@ -42,39 +51,29 @@ static inline const short GetNr() {
 }
 
 
-
-#define MAXN (1 << 15) // consideram ca numeerele sunt pe short
+#define MAXN (1 << 15) // consideram ca numerele sunt pe short
 #define MAXM (int)(5e6 + 5)
 
 static short x[MAXM], y[MAXM];
 static int nxt[MAXM], last[MAXN];
 
-static inline const short max(short a, short b) {
-	if(a < b) return b;
-	return a;
-}
-
 int n, m;
 
-
 static inline void ReadInput() {
-	short a, b;
 
-	n = m = 0;
-	a = 0;
-
-	while(a > -1) {
-		a = GetNr();
-		if(a > -1) {
-			b = GetNr();
-
-			++m;	
-			x[m] = a;
-			y[m] = b;
-			
-			n = max(n, max(a, b));
+	while(1) {
+		++m;
+		x[m] = GetNr();
+		if(x[m] > -1) {
+			y[m] = GetNr();
+			if(n < x[m]) n = x[m]; // daca nu folosim n putem sa scoatem if-urile
+			if(n < y[m]) n = y[m];
+		}
+		else {
+			break;
 		}
 	}	
+	m--;
 	
 	for(int i = m; i >= 1; --i) {
 		nxt[i] = last[x[i]];
@@ -108,6 +107,11 @@ static inline void Solve() {
 				++r;
 
 				printf(",%hd", y[pos]);
+
+				if(r == n + 1) { // s-ar putea sa mareasca timpul ????
+					printf("]");
+					return ;
+				}
 			}
 			pos = nxt[pos];
 		}

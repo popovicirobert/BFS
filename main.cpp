@@ -103,6 +103,9 @@ static unsigned short Q[MAXN];
 
 static inline void Solve(int n, int m) {
 
+	
+	printf("%d %d\n", n, m);
+
 	unsigned short l = 0, r = 1;
 	Q[0] = 0;
 	visited[0] = 1;
