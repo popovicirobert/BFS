@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <string.h>
 #include <future>
+#include <chrono>
+#include <random>
 
 #define MAXBUF (1 << 17)
 #define SIGMA 256
@@ -91,9 +93,32 @@ static inline void ReadInput() {
 		n = max(n, cur.get());
 	}
 	
-	for(int i = m; i >= 1; --i) {
-		nxt[i] = last[x[i]];
-		last[x[i]] = i;
+	if(m <= 2 * MAXN) {
+		for(int i = m; i >= 1; --i) {
+			nxt[i] = last[x[i]];
+			last[x[i]] = i;
+		}
+	}
+	else {
+		std::mt19937 rng(std::chrono::steady_clock::now().time_since_epoch().count());
+		int arr[128];
+		for(int i = 0; i < 128; i++) {
+			arr[i] = rng() % 97;
+		}
+		for(int i = m; i > m - 128; i--) {
+			nxt[i] = last[x[i]];
+			last[x[i]] = i;
+		}	
+		for(int i = m - 128; i >= 129; i--) {
+			if(arr[(i + (i >> 7)) & 127]) {
+				nxt[i] = last[x[i]];
+				last[x[i]] = i;
+			}
+		}
+		for(int i = 128; i >= 1; i--) {
+			nxt[i] = last[x[i]];
+			last[x[i]] = i;
+		}
 	}
 }
 
