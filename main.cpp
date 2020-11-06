@@ -61,6 +61,7 @@ static inline void ReadInput() {
 			break;
 		}
 	}		
+	--m;
 }
 
 
@@ -73,7 +74,7 @@ int n = 0;
 
 
 static inline void GetEdges() {
-	notVisited.set();
+	/*notVisited.set();
 
 	int l = 0, r = 1;
 	Q[0] = 0;
@@ -105,7 +106,7 @@ static inline void GetEdges() {
 	}
 	for(int i = 0; i < n; ++i) {
 		edge[smallX[i]][smallY[i]] = 1;
-	}
+	}*/
 	/*int sz = n;
 	for(int i = m; i >= 1; --i) {
 		if(edge[x[i]][y[i]]) {
