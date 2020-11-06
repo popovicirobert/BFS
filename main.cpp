@@ -41,7 +41,7 @@ static inline const short GetNr() {
 }
 
 
-#define MAXN (1 << 15) // consideram ca numerele sunt pe short
+const int MAXN = (1 << 15); // consideram ca numerele sunt pe short
 
 static std::bitset<MAXN> edge[MAXN];
 
@@ -68,7 +68,7 @@ static std::bitset<MAXN> notVisited, temp;
 static short Q[MAXN];
 
 static short smallX[MAXN], smallY[MAXN];
-static int last[MAXN], nxt[MAXN];
+static int last[MAXM], nxt[MAXM];
 int n = 0;
 
 
@@ -106,9 +106,11 @@ static inline void GetEdges() {
 	for(int i = 0; i < n; ++i) {
 		edge[smallX[i]][smallY[i]] = 1;
 	}
-	int sz = n;
+	/*int sz = n;
 	for(int i = m; i >= 1; --i) {
 		if(edge[x[i]][y[i]]) {
+			edge[x[i]][y[i]] = 0;
+
 			nxt[sz] = last[x[i]];
 			last[x[i]] = sz;
 
@@ -116,11 +118,16 @@ static inline void GetEdges() {
 			sz--;
 		}
 	}
-	n++;
+	n++;*/
+
+	for(int i = m; i >= 1; --i) {
+		nxt[i] = last[x[i]];
+		last[x[i]] = i;
+	}
 }
 
 
-static inline void Solve() {
+/*static inline void Solve() {
 	int l = 0, r = 1;
 
 	Q[0] = 0;
@@ -141,9 +148,64 @@ static inline void Solve() {
 			pos = nxt[pos];
 		}
 	}
+}*/
+
+static char visited[MAXN];
+int sz = 0;
+
+static inline void AddChar(const char ch) {
+	buf[sz++] = ch;
+	if(sz == MAXBUF) {
+		fwrite(buf, 1, MAXBUF, stdout);
+		sz = 0;
+	}
 }
 
 
+static inline void Solve() {
+
+	short l = 0, r = 1;
+	Q[0] = 0;
+	visited[0] = 1;
+
+	AddChar('[');
+	AddChar('0');
+	
+	int pos;
+
+	while(l < r) {
+		pos = last[Q[l]];
+		++l;
+
+		while(pos) {
+			if(visited[y[pos]] == 0) {
+				visited[y[pos]] = 1;
+				Q[r] = y[pos];
+				++r;
+
+				AddChar(',');
+
+				if(y[pos] == 0) {
+					AddChar('0');
+				}
+				else {
+					short cur = y[pos];
+					for(short pw = 10000; pw >= 1; pw /= 10) {
+						if(cur >= pw) {
+							AddChar('0' + (cur / pw) % 10);
+						}
+					}
+				}
+			}
+			pos = nxt[pos];
+		}
+	}
+	AddChar(']');
+	if(sz) {
+		fwrite(buf, 1, sz, stdout);
+	}
+
+}
 
 int main() {
 
