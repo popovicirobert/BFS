@@ -41,7 +41,7 @@ static inline const short GetNr() {
 }
 
 
-#define MAXN (1 << 14) // consideram ca numerele sunt pe short
+#define MAXN (1 << 15) // consideram ca numerele sunt pe short
 
 static std::bitset<MAXN> edge[MAXN];
 
@@ -68,14 +68,14 @@ static std::bitset<MAXN> notVisited, temp;
 static short Q[MAXN];
 
 static short smallX[MAXN], smallY[MAXN];
-static short last[MAXN], nxt[MAXN];
-short n = 0;
+static int last[MAXN], nxt[MAXN];
+int n = 0;
 
 
 static inline void GetEdges() {
 	notVisited.set();
 
-	short l = 0, r = 1;
+	int l = 0, r = 1;
 	Q[0] = 0;
 	notVisited[0] = 0;
 
@@ -84,9 +84,9 @@ static inline void GetEdges() {
 	while(l < r) {
 		short nod = Q[l];
 		l++;
-
+	
 		temp = (edge[nod] & notVisited);
-		short pos = temp._Find_first();
+		int pos = temp._Find_first();
 
 		while(pos != MAXN) {
 			notVisited[pos] = 0;
@@ -100,14 +100,14 @@ static inline void GetEdges() {
 		}
 	}
 	
-	for(short i = 0; i < MAXN; i++) {
+	for(int i = 0; i < MAXN; ++i) {
 		edge[i].reset();
 	}
-	for(short i = 0; i < n; i++) {
+	for(int i = 0; i < n; ++i) {
 		edge[smallX[i]][smallY[i]] = 1;
 	}
-	short sz = n;
-	for(int i = m; i >= 1; i--) {
+	int sz = n;
+	for(int i = m; i >= 1; --i) {
 		if(edge[x[i]][y[i]]) {
 			nxt[sz] = last[x[i]];
 			last[x[i]] = sz;
@@ -121,7 +121,7 @@ static inline void GetEdges() {
 
 
 static inline void Solve() {
-	short l = 0, r = 1;
+	int l = 0, r = 1;
 
 	Q[0] = 0;
 	printf("[0");
@@ -130,10 +130,10 @@ static inline void Solve() {
 		short nod = Q[l];
 		l++;
 	
-		short pos = last[nod];
+		int pos = last[nod];
 		while(pos) {
 			Q[r++] = smallY[pos];
-			printf(",%d", smallY[pos]);
+			printf(",%hd", smallY[pos]);
 			if(r == n) {
 				printf("]");
 				return;
