@@ -44,10 +44,10 @@ static inline const short GetNr() {
 #define MAXM (int)(5e6 + 5)
 
 static short x[MAXM], y[MAXM];
-static short degree[MAXN];
-static short edges[MAXM];
+static int degree[MAXN];
+static int edges[MAXM];
 
-int m;
+int n, m;
 
 static inline void ReadInput() {
 	while(1) {
@@ -70,21 +70,41 @@ static inline void ReadInput() {
 		}
 	}
 	for(int i = m; i >= 1; --i) {
-		--degree[y[i]];
-		edges[degree[y[i]]] = x[i];
+		degree[y[i]]--;
+		edges[degree[y[i]]] = i;
 	}
 }
 
-unsigned long long visited[1 << 22];
 static unsigned short distance[MAXN];
-static short from[MAXN];
 static short Q[MAXN];
 
-static inline void Solve() {
+static int index[MAXN];
+
+void QSort(unsigned short l, unsigned short r) {
+	int piv = index[(l + r) / 2];
+	unsigned short beg = l, end = r;
+	while(beg <= end) {
+		while(index[beg] < piv) beg++;
+		while(index[end] > piv) end--;
+		if(beg <= end) {
+			int aux = index[beg];
+			index[beg] = index[end];
+			index[end] = aux;
+			++beg;
+			--end;
+		}
+	}
+	if(beg < r) QSort(beg, r);
+	if(l < end) QSort(l, end);
+}
+
+//#include <assert.h>
+
+static inline void GetEdges() {
 
 	short l = 0, r = 1;
 	unsigned short cur_dist = 1, count = 1;
-	distance[0] = 1;
+	distance[0] = 1;	
 
 	while(count) {
 		count = 0;
@@ -93,10 +113,10 @@ static inline void Solve() {
 		for(unsigned short nod = 0; nod <= n; nod++) {
 			if(distance[nod] == 0) {
 				for(int i = degree[nod]; i < degree[nod + 1]; i++) {
-					if(distance[edges[i]] == cur_dist) {
+					if(distance[x[edges[i]]] == cur_dist) {	
 						distance[nod] = cur_dist + 1;
-
 						
+						index[nod] = edges[i];
 
 						count++;
 						break;
@@ -107,6 +127,56 @@ static inline void Solve() {
 
 		cur_dist++;	
 	}
+
+		
+	QSort(1, n);
+
+	#pragma omp parallel for
+	for(unsigned short i = 0; i <= n + 1; i++) {
+		degree[i] = 0;
+	}
+	for(unsigned short i = 1; i <= n; i++) {
+		if(index[i]) {
+			degree[x[index[i]]]++;
+		}
+	}
+	for(unsigned short i = 1; i <= n + 1; i++) {
+		degree[i] += degree[i - 1];
+	}
+	for(unsigned short i = n; i >= 1; i--) {
+		if(index[i]) {	
+			degree[x[index[i]]]--;
+			edges[degree[x[index[i]]]] = y[index[i]];
+		}
+	}
+}
+
+
+static char visited[MAXN];
+
+static inline void Solve() {
+	short l = 0, r = 1;
+	Q[0] = 0;
+	visited[0] = 1;
+
+	printf("[0");
+
+	while(l < r) {
+		short nod = Q[l];
+		++l;
+
+		for(int i = degree[nod]; i < degree[nod + 1]; ++i) {	
+			if(!visited[edges[i]]) {
+				visited[edges[i]] = 1;
+				Q[r] = edges[i];
+				printf(",%hd", Q[r]);
+				++r;
+			}
+		}
+	}
+
+	printf("]");
+	
 }
 
 
@@ -116,6 +186,8 @@ int main() {
 	Init();
 
 	ReadInput();
+
+	GetEdges();
 
 	Solve();
 
