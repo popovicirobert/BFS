@@ -1,6 +1,6 @@
-#include <stdio.h>
-#include <string.h>
-#include <bitset>
+#include <cstdio>
+#include <cstring>
+#include <iostream>
 
 #define MAXBUF (1 << 17)
 
@@ -41,170 +41,122 @@ static inline const short GetNr() {
 }
 
 
-const int MAXN = (1 << 15); // consideram ca numerele sunt pe short
-const int MAXM = (int) 5e5 + 5;
+#define MAXN (1 << 16) // consideram ca numerele sunt pe short
+#define MAXM (int)(5e6 + 5)
 
 static short x[MAXM], y[MAXM];
 static int degree[MAXN];
-int m;
+static int edges[MAXM];
+
+int n, m;
 
 static inline void ReadInput() {
 	while(1) {
-		x[++m] = GetNr();
+		++m;
+		x[m] = GetNr();
 		if(x[m] > -1) {
 			y[m] = GetNr();
-			degree[x[m]]++;
+			degree[y[m]]++;
 		}
 		else {
 			break;
 		}
-	}		
-	--m;
+	}	
+	m--;
+	
+	for(int i = 1; i < MAXN; ++i) {
+		degree[i] += degree[i - 1];	
+		if(degree[i] > degree[i - 1]) {
+			n = i;
+		}
+	}
+	for(int i = m; i >= 1; --i) {
+		degree[y[i]]--;
+		edges[degree[y[i]]] = i;
+	}
 }
 
-
-static std::bitset<MAXN> notVisited, temp;
+static unsigned short distance[MAXN];
 static short Q[MAXN];
 
-static short smallX[MAXN], smallY[MAXN];
-static int last[MAXM], nxt[MAXM];
-int n = 0;
+static int Index[MAXN];
 
+#include <vector>
+#include <algorithm>
+#include <cassert>
+
+//using namespace std;
+
+std::vector<short> g[MAXN];
 
 static inline void GetEdges() {
-	/*notVisited.set();
 
-	int l = 0, r = 1;
-	Q[0] = 0;
-	notVisited[0] = 0;
+	unsigned short cur_dist = 1, count = 1;
+	distance[0] = 1;	
 
-	n = 0;
+	while(count) {
+		count = 0;
 
-	while(l < r) {
-		short nod = Q[l];
-		l++;
-	
-		temp = (edge[nod] & notVisited);
-		int pos = temp._Find_first();
+		#pragma omp parallel for reduction(+:count)
+		for(unsigned short nod = 0; nod <= n; nod++) {
+			if(distance[nod] == 0) {
+				for(int i = degree[nod]; i < degree[nod + 1]; ++i) {
+					if(distance[x[edges[i]]] == cur_dist) {	
+						distance[nod] = cur_dist + 1;
+						
+						Index[nod] = edges[i];
 
-		while(pos != MAXN) {
-			notVisited[pos] = 0;
-			Q[r++] = pos;
-			
-			smallX[n] = nod;
-			smallY[n] = pos;
-			n++;
-
-			pos = temp._Find_next(pos);
+						count++;
+						break;
+					}
+				}
+			}
 		}
-	}
-	
-	for(int i = 0; i < MAXN; ++i) {
-		edge[i].reset();
-	}
-	for(int i = 0; i < n; ++i) {
-		edge[smallX[i]][smallY[i]] = 1;
-	}*/
-	/*int sz = n;
-	for(int i = m; i >= 1; --i) {
-		if(edge[x[i]][y[i]]) {
-			edge[x[i]][y[i]] = 0;
 
-			nxt[sz] = last[x[i]];
-			last[x[i]] = sz;
+		cur_dist++;	
+	}
 
-			smallY[sz] = y[i];
-			sz--;
+		
+	std::sort(Index, Index + n + 1);
+
+	assert(Index[0] == 0);
+
+	for(int i = 1; i <= n; i++) {
+		if(Index[i]) {
+			g[x[Index[i]]].push_back(y[Index[i]]);
 		}
-	}
-	n++;*/
-
-	for(int i = m; i >= 1; --i) {
-		nxt[i] = last[x[i]];
-		last[x[i]] = i;
 	}
 }
 
-
-/*static inline void Solve() {
-	int l = 0, r = 1;
-
-	Q[0] = 0;
-	printf("[0");
-
-	while(l < r) {
-		short nod = Q[l];
-		l++;
-	
-		int pos = last[nod];
-		while(pos) {
-			Q[r++] = smallY[pos];
-			printf(",%hd", smallY[pos]);
-			if(r == n) {
-				printf("]");
-				return;
-			}
-			pos = nxt[pos];
-		}
-	}
-}*/
 
 static char visited[MAXN];
-int sz = 0;
-
-static inline void AddChar(const char ch) {
-	buf[sz++] = ch;
-	if(sz == MAXBUF) {
-		fwrite(buf, 1, MAXBUF, stdout);
-		sz = 0;
-	}
-}
-
 
 static inline void Solve() {
-
 	short l = 0, r = 1;
 	Q[0] = 0;
 	visited[0] = 1;
 
-	AddChar('[');
-	AddChar('0');
-	
-	int pos;
+	printf("[0");
 
 	while(l < r) {
-		pos = last[Q[l]];
+		short nod = Q[l];
 		++l;
 
-		while(pos) {
-			if(visited[y[pos]] == 0) {
-				visited[y[pos]] = 1;
-				Q[r] = y[pos];
-				++r;
-
-				AddChar(',');
-
-				if(y[pos] == 0) {
-					AddChar('0');
-				}
-				else {
-					short cur = y[pos];
-					for(short pw = 10000; pw >= 1; pw /= 10) {
-						if(cur >= pw) {
-							AddChar('0' + (cur / pw) % 10);
-						}
-					}
-				}
+		for(auto it : g[nod]) {
+			if(visited[it] == 0) {
+				visited[it] = 1;
+				Q[r] = it;
+				printf(",%hd", Q[r]);
+				r++;
 			}
-			pos = nxt[pos];
 		}
 	}
-	AddChar(']');
-	if(sz) {
-		fwrite(buf, 1, sz, stdout);
-	}
 
+	printf("]");
+	
 }
+
+
 
 int main() {
 

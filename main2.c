@@ -40,7 +40,7 @@ static inline const short GetNr() {
 }
 
 
-#define MAXN (1 << 15) // consideram ca numerele sunt pe short
+#define MAXN (1 << 16) // consideram ca numerele sunt pe short
 #define MAXM (int)(5e6 + 5)
 
 static short x[MAXM], y[MAXM];
@@ -98,11 +98,11 @@ void QSort(unsigned short l, unsigned short r) {
 	if(l < end) QSort(l, end);
 }
 
+
 //#include <assert.h>
 
 static inline void GetEdges() {
 
-	short l = 0, r = 1;
 	unsigned short cur_dist = 1, count = 1;
 	distance[0] = 1;	
 
@@ -112,7 +112,7 @@ static inline void GetEdges() {
 		#pragma omp parallel for reduction(+:count)
 		for(unsigned short nod = 0; nod <= n; nod++) {
 			if(distance[nod] == 0) {
-				for(int i = degree[nod]; i < degree[nod + 1]; i++) {
+				for(int i = degree[nod]; i < degree[nod + 1]; ++i) {
 					if(distance[x[edges[i]]] == cur_dist) {	
 						distance[nod] = cur_dist + 1;
 						
