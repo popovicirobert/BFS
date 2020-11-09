@@ -42,12 +42,10 @@ static inline const short GetNr() {
 
 
 const int MAXN = (1 << 15); // consideram ca numerele sunt pe short
-
-static std::bitset<MAXN> edge[MAXN];
-
 const int MAXM = (int) 5e5 + 5;
 
 static short x[MAXM], y[MAXM];
+static int degree[MAXN];
 int m;
 
 static inline void ReadInput() {
@@ -55,7 +53,7 @@ static inline void ReadInput() {
 		x[++m] = GetNr();
 		if(x[m] > -1) {
 			y[m] = GetNr();
-			edge[x[m]][y[m]] = 1;
+			degree[x[m]]++;
 		}
 		else {
 			break;
