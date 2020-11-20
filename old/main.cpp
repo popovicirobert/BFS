@@ -1,5 +1,6 @@
-#include <stdio.h>
-#include <string.h>
+#include <cstdio>
+#include <cstring>
+#include <iostream>
 
 #define MAXBUF (1 << 17)
 
@@ -55,7 +56,7 @@ static inline void ReadInput() {
 		x[m] = GetNr();
 		if(x[m] > -1) {
 			y[m] = GetNr();
-			degree[y[m]]++;
+			degree[x[m]]++;
 		}
 		else {
 			break;
@@ -70,36 +71,23 @@ static inline void ReadInput() {
 		}
 	}
 	for(int i = m; i >= 1; --i) {
-		degree[y[i]]--;
-		edges[degree[y[i]]] = i;
+		degree[x[i]]--;
+		edges[degree[x[i]]] = i;
 	}
 }
 
 static unsigned short distance[MAXN];
 static short Q[MAXN];
 
-static int index[MAXN];
+static int Index[MAXN];
 
-void QSort(unsigned short l, unsigned short r) {
-	int piv = index[(l + r) / 2];
-	unsigned short beg = l, end = r;
-	while(beg <= end) {
-		while(index[beg] < piv) beg++;
-		while(index[end] > piv) end--;
-		if(beg <= end) {
-			int aux = index[beg];
-			index[beg] = index[end];
-			index[end] = aux;
-			++beg;
-			--end;
-		}
-	}
-	if(beg < r) QSort(beg, r);
-	if(l < end) QSort(l, end);
-}
+#include <vector>
+#include <algorithm>
+#include <cassert>
 
+//using namespace std;
 
-//#include <assert.h>
+std::vector<short> g[MAXN];
 
 static inline void GetEdges() {
 
@@ -116,7 +104,7 @@ static inline void GetEdges() {
 					if(distance[x[edges[i]]] == cur_dist) {	
 						distance[nod] = cur_dist + 1;
 						
-						index[nod] = edges[i];
+						Index[nod] = edges[i];
 
 						count++;
 						break;
@@ -129,24 +117,13 @@ static inline void GetEdges() {
 	}
 
 		
-	QSort(1, n);
+	std::sort(Index, Index + n + 1);
 
-	#pragma omp parallel for
-	for(unsigned short i = 0; i <= n + 1; i++) {
-		degree[i] = 0;
-	}
-	for(unsigned short i = 1; i <= n; i++) {
-		if(index[i]) {
-			degree[x[index[i]]]++;
-		}
-	}
-	for(unsigned short i = 1; i <= n + 1; i++) {
-		degree[i] += degree[i - 1];
-	}
-	for(unsigned short i = n; i >= 1; i--) {
-		if(index[i]) {	
-			degree[x[index[i]]]--;
-			edges[degree[x[index[i]]]] = y[index[i]];
+	assert(Index[0] == 0);
+
+	for(int i = 1; i <= n; i++) {
+		if(Index[i]) {
+			g[x[Index[i]]].push_back(y[Index[i]]);
 		}
 	}
 }
@@ -165,12 +142,12 @@ static inline void Solve() {
 		short nod = Q[l];
 		++l;
 
-		for(int i = degree[nod]; i < degree[nod + 1]; ++i) {	
-			if(!visited[edges[i]]) {
-				visited[edges[i]] = 1;
-				Q[r] = edges[i];
+		for(auto it : g[nod]) {
+			if(visited[it] == 0) {
+				visited[it] = 1;
+				Q[r] = it;
 				printf(",%hd", Q[r]);
-				++r;
+				r++;
 			}
 		}
 	}
