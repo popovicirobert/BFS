@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <ctype.h>
+#include <omp.h>
 #define ull unsigned long long
 
 #define MAXBUF (1 << 17)
@@ -54,7 +55,6 @@ static int edges[MAXM];
 
 int n, m;
 
-//#include <assert.h>
 
 static inline void ReadInput() {
 	while(1) {
@@ -62,7 +62,6 @@ static inline void ReadInput() {
 		x[m] = GetNr();
 		if(x[m] > -1) {
 			y[m] = GetNr();
-			//assert(max(x[m], y[m]) < 20000);
 			degree[x[m]]++;
 		}
 		else {
@@ -90,6 +89,7 @@ static inline void ReadInput() {
 			n = max(n, x[i]);
 		}
 	}
+
 
 	for(int i = 1; i <= n + 1; ++i) {
 		degree[i] += degree[i - 1];
@@ -199,8 +199,11 @@ static inline void Solve() {
 }
 
 
-
 int main() {
+
+	omp_set_dynamic(0);
+	omp_set_num_threads(70);
+
 	Init();
 
 	ReadInput();
