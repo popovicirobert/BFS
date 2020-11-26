@@ -1,5 +1,5 @@
 #include <stdio.h>
-#include <string.h>
+#include <ctype.h>
 #define ull unsigned long long
 
 #define MAXBUF (1 << 17)
@@ -54,7 +54,7 @@ static int edges[MAXM];
 
 int n, m;
 
-#include <assert.h>
+//#include <assert.h>
 
 static inline void ReadInput() {
 	while(1) {
@@ -62,7 +62,7 @@ static inline void ReadInput() {
 		x[m] = GetNr();
 		if(x[m] > -1) {
 			y[m] = GetNr();
-			assert(max(x[m], y[m]) < 20000);
+			//assert(max(x[m], y[m]) < 20000);
 			degree[x[m]]++;
 		}
 		else {
