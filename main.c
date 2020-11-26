@@ -49,175 +49,145 @@ static inline int max(int a, int b) {
 #define MAXM 5000000
 
 static int x[MAXM], y[MAXM];
-static int degree[2][MAXN];
-static int edges[2][MAXM]; // graful normal si inversat
+static int degree[MAXN];
+static int edges[MAXM]; 
 
 int n, m;
 
 static inline void ReadInput() {
 	while(1) {
-		++m;
+		m++;
 		x[m] = GetNr();
 		if(x[m] > -1) {
 			y[m] = GetNr();
-			degree[0][x[m]]++;
-			degree[1][y[m]]++;
+			degree[x[m]]++;
 		}
 		else {
 			break;
 		}
 	}	
 	m--;
-	
-	for(int i = 1; i < MAXN; ++i) {
-		if(degree[0][i] || degree[1][i]) {
-			n = max(n, i);
-		}
-		degree[0][i] += degree[0][i - 1];
-		degree[1][i] += degree[1][i - 1];
-	}
-	for(int i = m; i >= 1; --i) {
-		degree[0][x[i]]--;
-		edges[0][degree[0][x[i]]] = y[i];
 
-		degree[1][y[i]]--;
-		edges[1][degree[1][y[i]]] = x[i];
+	#pragma omp parallel for reduction(max:n)
+	for(int i = 1; i <= m; ++i) {
+		n = max(n, y[i]);
+	}
+	
+	if(MAXN < m) {
+		#pragma omp parallel for reduction(max:n)
+		for(int i = 1; i < MAXN; ++i) {
+			if(degree[i]) {
+				n = max(n, i);
+			}
+		}
+	}
+	else {
+		#pragma omp parallel for reduction(max:n)
+		for(int i = 1; i <= m; ++i) {
+			n = max(n, x[i]);
+		}
+	}
+
+	for(int i = 1; i <= n + 1; ++i) {
+		degree[i] += degree[i - 1];
+	}
+	for(int i = 1; i <= m; ++i) {
+		degree[x[i]]--;
+		edges[degree[x[i]]] = y[i];
 	}
 }
 
-
-#include <assert.h>
-
-static int dist[2][MAXN];
-static ull ways[2][MAXN];
+static int dist[MAXN];
+static ull ways0[MAXN];
+static double ways1[MAXN];
 static int Q[MAXN];
-static char visited[MAXN];
 static double g[MAXN];
-static double answer[MAXN];
 
 static inline void Solve() {
 	for(int s = 0; s <= n; s++) {
-		#pragma omp parallel for
-		for(int i = 0; i <= n; i++) {
-			dist[0][i] = ways[0][i] = 0;
-		}
-	
-		int sz = 1, cur_dist = 1;
-		dist[0][s] = ways[0][s] = 1;
-
-		while(sz) {
-			cur_dist++;
-			sz = 0;
-
-			#pragma omp parallel for reduction(+:sz)
-			for(int i = 0; i <= n; ++i) {
-				if(dist[0][i] == 0) {
-					for(int j = degree[1][i]; j < degree[1][i + 1]; ++j) {
-						if(dist[0][edges[1][j]] == cur_dist - 1) {
-							sz += (dist[0][i] == 0);
-							dist[0][i] = cur_dist;
-							ways[0][i] += ways[0][edges[1][j]];
-						}
-					}
-				}
-			}
-		}
 
 		int l = 0, r = 1;
+
 		Q[0] = s;
-		visited[s] = 1;
-		while(l < r) {
-			int nod = Q[l++];
+		dist[s] = ways0[s] = 1;
 
-			for(int i = degree[0][nod]; i < degree[0][nod + 1]; ++i) {
-				int v = edges[0][i];
-				if(visited[v] == 0) {
-					Q[r++] = v;
-					visited[v] = 1;
+		while(l < r) {
+			const int nod = Q[l++];
+			for(int i = degree[nod]; i < degree[nod + 1]; ++i) {
+				const int nei = edges[i];
+				if(!dist[nei]) {
+					Q[r++] = nei;
+					dist[nei] = dist[nod] + 1;
+				}
+				if(dist[nei] == dist[nod] + 1) {
+					ways0[nei] += ways0[nod];
 				}
 			}
 		}
 
-		l = 0;
-		visited[s] = 0;
-		while(l < r) {
-			int nod = Q[l++];
-
-			for(int i = degree[0][nod]; i < degree[0][nod + 1]; ++i) {
-				int v = edges[0][i];
-				if(visited[v] == 1) {
-
-					#pragma omp parallel for
-					for(int i = 0; i < r; ++i) {
-						dist[1][Q[i]] = ways[1][Q[i]] = 0;
-					}
-
-					visited[v] = 0;
-					
-					cur_dist = sz = 1;
-					dist[1][v] = ways[1][v] = 1;
-
-					while(sz) {
-						cur_dist++;
-						sz = 0;		
-				
-						#pragma omp parallel for reduction(+:sz)
-						for(int i = 0; i < r; ++i) {
-							int t = Q[i];
-
-							/*if(v == 0 && s == 1 && t == 5) {
-								printf("%d %d %d %d\n", s, v, t, dist[1][t]);
-							}*/
-
-							if(t != s && t != v && dist[1][t] == 0) {
-								for(int j = degree[1][t]; j < degree[1][t + 1]; ++j) {
-									if(dist[1][edges[1][j]] == cur_dist - 1) {
-										sz += (dist[1][t] == 0);
-										dist[1][t] = cur_dist;
-										ways[1][t] += ways[1][edges[1][j]];
-									}
-								}	
-
-								if(dist[1][t]) {	
-									if(dist[0][v] + dist[1][t] == dist[0][t] + 1) {
-										assert(ways[0][v] * ways[1][t] <= ways[0][t]);
-
-										/*if(v == 0)
-										printf("%d %d %d %llu %llu %llu\n", s, v, t, ways[0][v], ways[1][t], ways[0][t]);
-										*/
-
-										g[v] += 1.0 * (1.0 * ways[0][v] / ways[0][t]) * ways[1][t];
-									}
-								}
-							}
-						}
-					}
+		for(int i = r - 1; i >= 0; --i) {
+			const int v = Q[i];
+			double sum = 0;
+			
+			#pragma omp parallel for reduction(+:sum)
+			for(int j = degree[v]; j < degree[v + 1]; ++j) {
+				const int nei = edges[j];
+				if(dist[v] + 1 == dist[nei]) {
+					sum += ways1[nei];
 				}
 			}
+
+			ways1[v] += sum;
+
+			if(s != v) {
+				g[v] += ways0[v] * ways1[v];
+			}
+
+			ways1[v] += 1.0 / ways0[v];	
 		}
+		
+		#pragma omp parallel for
+		for(int i = 0; i < r; ++i) {
+			const int nod = Q[i];
+
+			dist[nod] = 0;
+			ways0[nod] = ways1[nod] = 0;
+		}
+
 	}
 
 	double mx = 0, mn = 1LL << 62;
 	#pragma omp parallel for reduction(min:mn) reduction(max:mx)
-	for(int i = 0; i <= n; i++) {
+	for(int i = 0; i <= n; ++i) {
 		if(mx < g[i]) mx = g[i];
 		if(mn > g[i]) mn = g[i];
 	}
 
 	if(mx - mn > 0) {
-		for(int i = 0; i <= n; i++) {
-			answer[i] = 1.0 * (g[i] - mn) / (mx - mn);
+		#pragma omp prallel for
+		for(int i = 0; i <= n; ++i) {
+			g[i] = 1.0 * (g[i] - mn) / (mx - mn);
 		}
-	}
 
-	printf("[");
-	for(int i = 0; i <= n; i++) {
-		if(i) {
-			printf(",");
+		printf("[");
+		for(int i = 0; i <= n; ++i) {
+			if(i) {
+				printf(",");
+			}
+			printf("(%d,%.2lf)", i, g[i]);
 		}
-		printf("(%d,%.2lf)", i, answer[i]);
+		printf("]");
 	}
-	printf("]");
+	else {
+		printf("[");
+		for(int i = 0; i <= n; ++i) {
+			if(i) {
+				printf(",");
+			}
+			printf("(%d,0.00)", i);
+		}
+		printf("]");
+	}
 }
 
 
