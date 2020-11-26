@@ -62,8 +62,8 @@ static inline void ReadInput() {
 		x[m] = GetNr();
 		if(x[m] > -1) {
 			y[m] = GetNr();
-			degree[x[m]]++;
 			assert(max(x[m], y[m]) < 20000);
+			degree[x[m]]++;
 		}
 		else {
 			break;
