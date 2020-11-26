@@ -100,6 +100,8 @@ static inline void ReadInput() {
 	}
 }
 
+const ull INF = 1e2;
+
 static int dist[MAXN];
 static ull ways0[MAXN];
 static double ways1[MAXN];
@@ -116,6 +118,9 @@ static inline void Solve() {
 
 		while(l < r) {
 			const int nod = Q[l++];
+			if(ways0[nod] > INF) {
+				continue;
+			}
 			for(int i = degree[nod]; i < degree[nod + 1]; ++i) {
 				const int nei = edges[i];
 				if(!dist[nei]) {
@@ -132,7 +137,7 @@ static inline void Solve() {
 			const int v = Q[i];
 			double sum = 0;
 			
-			#pragma omp parallel for reduction(+:sum)
+			//#pragma omp parallel for reduction(+:sum)
 			for(int j = degree[v]; j < degree[v + 1]; ++j) {
 				const int nei = edges[j];
 				if(dist[v] + 1 == dist[nei]) {
