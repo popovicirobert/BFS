@@ -54,6 +54,8 @@ static int edges[MAXM];
 
 int n, m;
 
+#include <assert.h>
+
 static inline void ReadInput() {
 	while(1) {
 		m++;
@@ -61,6 +63,7 @@ static inline void ReadInput() {
 		if(x[m] > -1) {
 			y[m] = GetNr();
 			degree[x[m]]++;
+			assert(max(x[m], y[m]) < 20000);
 		}
 		else {
 			break;
