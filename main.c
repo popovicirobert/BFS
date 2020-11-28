@@ -133,6 +133,13 @@ static inline void Solve() {
 		Q[0] = s;
 		dist[s] = ways0[s] = 1;
 
+		int last[MAXN];
+		int nxt[MAXM];
+		short node[MAXM];
+		int sz = 1;
+
+		memset(last, 0, sizeof(int) * (n + 1));
+
 		while(l < r) {
 			const int nod = Q[l++];
 			if(ways0[nod] > INF) {
@@ -146,6 +153,10 @@ static inline void Solve() {
 				}
 				if(dist[nei] == dist[nod] + 1) {
 					ways0[nei] += ways0[nod];
+
+					nxt[sz] = last[nod];
+					node[sz] = nei;
+					last[nod] = sz++;
 				}
 			}
 		}
@@ -153,12 +164,11 @@ static inline void Solve() {
 		for(int i = r - 1; i >= 1; --i) {
 			const int v = Q[i];
 			float sum = 0;
-			
-			for(int j = degree[v]; j < degree[v + 1]; ++j) {
-				const int nei = edges[j];
-				if(dist[v] + 1 == dist[nei]) {
-					sum += ways1[nei];
-				}
+
+			int pos = last[v];
+			while(pos) {
+				sum += ways1[node[pos]];
+				pos = nxt[pos];
 			}
 
 			ways1[v] += sum;
