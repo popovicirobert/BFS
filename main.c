@@ -47,11 +47,17 @@ static inline int max(int a, int b) {
 
 
 #define MAXN 14000
-#define MAXM 900000
+#define MAXM 500000
 
 static short x[MAXM], y[MAXM];
 static int degree[MAXN];
 static short edges[MAXM];
+
+static char degree_rev[MAXN];
+static short goodNodes[MAXN];
+int size;
+
+static char startPoint[MAXN];
 
 int n, m;
 
@@ -62,6 +68,7 @@ static inline void ReadInput() {
 		if(x[m] > -1) {
 			y[m] = GetNr();
 			degree[x[m]]++;
+			degree_rev[y[m]] = 1;
 		}
 		else {
 			break;
@@ -69,55 +76,57 @@ static inline void ReadInput() {
 	}	
 	m--;
 
-	for(int i = 1; i <= m; ++i) {
-		n = max(n, y[i]);
-	}
-	
-	if(MAXN < m) {
-		for(int i = 1; i < MAXN; ++i) {
-			if(degree[i]) {
-				n = max(n, i);
+	for(int i = 0; i < MAXN; i++) {
+		if(degree[i] || degree_rev[i]) {
+			n = max(n, i);
+			if(degree[i] && degree_rev[i]) {
+				goodNodes[size++] = i;
 			}
 		}
 	}
-	else {
-		for(int i = 1; i <= m; ++i) {
-			n = max(n, x[i]);
-		}
-	}
-
-
-	for(int i = 1; i <= n + 1; ++i) {
+	for(int i = 1; i <= n + 1; i++) {
 		degree[i] += degree[i - 1];
 	}
+
 	for(int i = 1; i <= m; ++i) {
 		degree[x[i]]--;
 		edges[degree[x[i]]] = y[i];
+	}
+
+	for(int i = 0; i <= n; i++) {
+		for(int j = degree[i]; j < degree[i + 1]; j++) {
+			const int nod = edges[j];
+			const int len = degree[nod + 1] - degree[nod];
+			if(len > 1 || (len == 1 && edges[degree[nod]] != i)) {
+				startPoint[i] = 1;
+				break;
+			}
+		}
 	}
 }
 
 const ull INF = 1e2;
 
-static double g[MAXN];
+static float g[MAXN];
 
 #include <string.h>
 
 static inline void Solve() {
-	#pragma omp parallel for schedule(static) num_threads(32)
+	#pragma omp parallel for schedule(static) num_threads(38)
 	for(int s = 0; s <= n; s++) {
 
-		if(degree[s] == degree[s + 1]) continue;
+		if(!startPoint[s]) continue;
 
 		short dist[MAXN];
 		ull ways0[MAXN];
-		double ways1[MAXN];
+		float ways1[MAXN];
 		short Q[MAXN];
-		double G[MAXN];
+		float G[MAXN];
 
 		memset(dist, 0, sizeof(int) * (n + 1));
 		memset(ways0, 0, sizeof(ull) * (n + 1));
-		memset(ways1, 0, sizeof(double) * (n + 1));
-		memset(G, 0, sizeof(double) * (n + 1));
+		memset(ways1, 0, sizeof(float) * (n + 1));
+		memset(G, 0, sizeof(float) * (n + 1));
 
 		int l = 0, r = 1;
 
@@ -141,9 +150,9 @@ static inline void Solve() {
 			}
 		}
 
-		for(int i = r - 1; i >= 0; --i) {
+		for(int i = r - 1; i >= 1; --i) {
 			const int v = Q[i];
-			double sum = 0;
+			float sum = 0;
 			
 			for(int j = degree[v]; j < degree[v + 1]; ++j) {
 				const int nei = edges[j];
@@ -154,17 +163,17 @@ static inline void Solve() {
 
 			ways1[v] += sum;
 
-			if(s != v) {
-				G[v] += ways0[v] * ways1[v];
-			}
+			G[v] = ways0[v] * ways1[v];
 
 			ways1[v] += 1.0 / ways0[v];	
 		}
+		ways1[s] = 0;
 
 		#pragma omp critical
 		{
-			for(int i = 0; i <= n; i++) {
-				g[i] += G[i];
+			for(int i = 0; i < size; ++i) {
+				const int nod = goodNodes[i];
+				g[nod] += G[nod];
 			}
 		}
 	}
