@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <ctype.h>
-#include <omp.h>
+//#include <omp.h>
 #define ull unsigned long long
 
 #define MAXBUF (1 << 17)
@@ -46,15 +46,14 @@ static inline int max(int a, int b) {
 }
 
 
-#define MAXN 100000
-#define MAXM 5000000
+#define MAXN 14000
+#define MAXM 900000
 
-static int x[MAXM], y[MAXM];
+static short x[MAXM], y[MAXM];
 static int degree[MAXN];
-static int edges[MAXM]; 
+static short edges[MAXM];
 
 int n, m;
-
 
 static inline void ReadInput() {
 	while(1) {
@@ -70,13 +69,11 @@ static inline void ReadInput() {
 	}	
 	m--;
 
-	#pragma omp parallel for reduction(max:n)
 	for(int i = 1; i <= m; ++i) {
 		n = max(n, y[i]);
 	}
 	
 	if(MAXN < m) {
-		#pragma omp parallel for reduction(max:n)
 		for(int i = 1; i < MAXN; ++i) {
 			if(degree[i]) {
 				n = max(n, i);
@@ -84,7 +81,6 @@ static inline void ReadInput() {
 		}
 	}
 	else {
-		#pragma omp parallel for reduction(max:n)
 		for(int i = 1; i <= m; ++i) {
 			n = max(n, x[i]);
 		}
@@ -102,14 +98,26 @@ static inline void ReadInput() {
 
 const ull INF = 1e2;
 
-static int dist[MAXN];
-static ull ways0[MAXN];
-static double ways1[MAXN];
-static int Q[MAXN];
 static double g[MAXN];
 
+#include <string.h>
+
 static inline void Solve() {
+	#pragma omp parallel for schedule(static) num_threads(32)
 	for(int s = 0; s <= n; s++) {
+
+		if(degree[s] == degree[s + 1]) continue;
+
+		short dist[MAXN];
+		ull ways0[MAXN];
+		double ways1[MAXN];
+		short Q[MAXN];
+		double G[MAXN];
+
+		memset(dist, 0, sizeof(int) * (n + 1));
+		memset(ways0, 0, sizeof(ull) * (n + 1));
+		memset(ways1, 0, sizeof(double) * (n + 1));
+		memset(G, 0, sizeof(double) * (n + 1));
 
 		int l = 0, r = 1;
 
@@ -137,7 +145,6 @@ static inline void Solve() {
 			const int v = Q[i];
 			double sum = 0;
 			
-			//#pragma omp parallel for reduction(+:sum)
 			for(int j = degree[v]; j < degree[v + 1]; ++j) {
 				const int nei = edges[j];
 				if(dist[v] + 1 == dist[nei]) {
@@ -148,41 +155,33 @@ static inline void Solve() {
 			ways1[v] += sum;
 
 			if(s != v) {
-				g[v] += ways0[v] * ways1[v];
+				G[v] += ways0[v] * ways1[v];
 			}
 
 			ways1[v] += 1.0 / ways0[v];	
 		}
-		
-		#pragma omp parallel for
-		for(int i = 0; i < r; ++i) {
-			const int nod = Q[i];
 
-			dist[nod] = 0;
-			ways0[nod] = ways1[nod] = 0;
+		#pragma omp critical
+		{
+			for(int i = 0; i <= n; i++) {
+				g[i] += G[i];
+			}
 		}
-
 	}
 
 	double mx = 0, mn = 1LL << 62;
-	#pragma omp parallel for reduction(min:mn) reduction(max:mx)
 	for(int i = 0; i <= n; ++i) {
 		if(mx < g[i]) mx = g[i];
 		if(mn > g[i]) mn = g[i];
 	}
 
 	if(mx - mn > 0) {
-		#pragma omp prallel for
-		for(int i = 0; i <= n; ++i) {
-			g[i] = 1.0 * (g[i] - mn) / (mx - mn);
-		}
-
 		printf("[");
 		for(int i = 0; i <= n; ++i) {
 			if(i) {
 				printf(",");
 			}
-			printf("(%d,%.2lf)", i, g[i]);
+			printf("(%d,%.2lf)", i, 1.0 * (g[i] - mn) / (mx - mn));
 		}
 		printf("]");
 	}
@@ -200,9 +199,6 @@ static inline void Solve() {
 
 
 int main() {
-
-	omp_set_dynamic(0);
-	omp_set_num_threads(70);
 
 	Init();
 
