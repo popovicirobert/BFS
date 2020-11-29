@@ -46,8 +46,8 @@ static inline int max(int a, int b) {
 }
 
 
-#define MAXN 14000
-#define MAXM 500000
+#define MAXN 13000
+#define MAXM 300000
 
 static short x[MAXM], y[MAXM];
 static int degree[MAXN];
@@ -60,6 +60,7 @@ int size;
 static char startPoint[MAXN];
 
 int n, m;
+//int maxGoodNodes;
 
 static inline void ReadInput() {
 	while(1) {
@@ -81,6 +82,7 @@ static inline void ReadInput() {
 			n = max(n, i);
 			if(degree[i] && degree_rev[i]) {
 				goodNodes[size++] = i;
+				//maxGoodNodes = max(maxGoodNodes, i);
 			}
 		}
 	}
@@ -105,27 +107,25 @@ static inline void ReadInput() {
 	}
 }
 
-const ull INF = 1e2;
+const int INF = 17;
 
 static float g[MAXN];
 
 #include <string.h>
 
 static inline void Solve() {
-	#pragma omp parallel for schedule(static) num_threads(38)
+	#pragma omp parallel for schedule(dynamic) num_threads(42)
 	for(int s = 0; s <= n; s++) {
 
 		if(!startPoint[s]) continue;
 
-		short dist[MAXN];
-		ull ways0[MAXN];
+		unsigned char dist[MAXN];
+		short ways0[MAXN];
 		float ways1[MAXN];
 		short Q[MAXN];
 		float G[MAXN];
 
-		memset(dist, 0, sizeof(int) * (n + 1));
-		memset(ways0, 0, sizeof(ull) * (n + 1));
-		memset(ways1, 0, sizeof(float) * (n + 1));
+		memset(dist, 0, sizeof(unsigned char) * (n + 1));
 		memset(G, 0, sizeof(float) * (n + 1));
 
 		int l = 0, r = 1;
@@ -133,12 +133,12 @@ static inline void Solve() {
 		Q[0] = s;
 		dist[s] = ways0[s] = 1;
 
-		int last[MAXN];
-		int nxt[MAXM];
-		short node[MAXM];
+		unsigned short last[MAXN];
+		unsigned short nxt[1 << 15];
+		short node[1 << 15];
 		int sz = 1;
 
-		memset(last, 0, sizeof(int) * (n + 1));
+		memset(last, 0, sizeof(unsigned short) * (n + 1));
 
 		while(l < r) {
 			const int nod = Q[l++];
@@ -147,11 +147,18 @@ static inline void Solve() {
 			}
 			for(int i = degree[nod]; i < degree[nod + 1]; ++i) {
 				const int nei = edges[i];
+
 				if(!dist[nei]) {
 					Q[r++] = nei;
 					dist[nei] = dist[nod] + 1;
+
+					ways0[nei] = ways0[nod];
+
+					nxt[sz] = last[nod];
+					node[sz] = nei;
+					last[nod] = sz++;
 				}
-				if(dist[nei] == dist[nod] + 1) {
+				else if(dist[nei] == dist[nod] + 1) {
 					ways0[nei] += ways0[nod];
 
 					nxt[sz] = last[nod];
@@ -164,20 +171,19 @@ static inline void Solve() {
 		for(int i = r - 1; i >= 1; --i) {
 			const int v = Q[i];
 			float sum = 0;
-
+			
 			int pos = last[v];
 			while(pos) {
 				sum += ways1[node[pos]];
 				pos = nxt[pos];
 			}
 
-			ways1[v] += sum;
+			ways1[v] = sum;
 
 			G[v] = ways0[v] * ways1[v];
 
-			ways1[v] += 1.0 / ways0[v];	
+			ways1[v] += 1.0 / ways0[v];
 		}
-		ways1[s] = 0;
 
 		#pragma omp critical
 		{
