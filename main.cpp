@@ -1,5 +1,5 @@
-#include <stdio.h>
-#include <ctype.h>
+#include <cstdio>
+#include <cctype>
 
 #define ull unsigned long long
 
@@ -41,11 +41,6 @@ static inline const short GetNr() {
 	return -1;
 }
 
-static inline int max(int a, int b) {
-	return a > b ? a : b;
-}
-
-
 #define MAXN 13000
 #define MAXM 80000
 
@@ -59,6 +54,14 @@ int size;
 
 static char startPoint[MAXN];
 short maxGoodNode;
+
+inline int min(int a, int b) {
+	return a < b ? a : b;
+}
+
+inline int max(int a, int b) {
+	return a > b ? a : b;
+}
 
 int n, m;
 
@@ -112,14 +115,17 @@ static inline void ReadInput() {
 	}
 }
 
-const int INF = 17; // merge aparent si cu 10
-
 static float g[MAXN];
 
-#include <string.h>
+#include <cstring>
+#include <thread>
+#include <mutex>
 
-static inline void Solve(int beg, int end) {
+std::mutex mtx;
 
+void Solve(int beg, int end) {
+
+	const int INF = 17; // merge aparent si cu 10
 	const float inv[32] = {0, 1, 0.5, 0.333333,
 							   0.25, 0.2, 0.166667,
 							   0.142857, 0.125, 0.111111,
@@ -136,12 +142,12 @@ static inline void Solve(int beg, int end) {
 	short Q[MAXN];
 
 	unsigned short last[MAXN];
-	unsigned short nxt[20000];
-	short node[20000];
+	unsigned short nxt[1 << 15];
+	short node[1 << 15];
 
 	float G[MAXN];
 
-	for(short s = beg; s <= end; s++) {
+	for(short s = beg; s <= end; ++s) {
 
 		if(!startPoint[s]) continue;
 		
@@ -204,18 +210,22 @@ static inline void Solve(int beg, int end) {
 			ways1[v] = sum + inv[ways0[v]];
 		}
 
-		if(size < r) {
-			for(short i = 0; i < size; ++i) {
-				const short nod = goodNodes[i];
-				g[nod] += G[nod];
+		mtx.lock();
+		{
+			if(size < r) {
+				for(short i = 0; i < size; ++i) {
+					const short nod = goodNodes[i];
+					g[nod] += G[nod];
+				}
+			}
+			else {
+				for(short i = 1; i < r; ++i) {
+					const short nod = Q[i];
+					g[nod] += G[nod];
+				}	
 			}
 		}
-		else {
-			for(short i = 1; i < r; ++i) {
-				const short nod = Q[i];
-				g[nod] += G[nod];
-			}	
-		}
+		mtx.unlock();
 	}
 }
 
@@ -226,7 +236,23 @@ int main() {
 
 	ReadInput();
 
-	Solve();
+
+
+	const int NUM_THREADS = 90;
+	int bucket = (n + 1) / NUM_THREADS;
+
+	std::thread t[NUM_THREADS];
+	int l = 0;
+
+	for(int i = 0; i < NUM_THREADS; i++) {
+		t[i] = std::thread(Solve, l, min(n, l + bucket));
+		l += bucket + 1;
+	}
+	for(int i = 0; i < NUM_THREADS; i++) {
+		t[i].join();
+	}
+
+
 
 	double mx = 0, mn = 1LL << 62;
 	for(int i = 0; i <= n; ++i) {
