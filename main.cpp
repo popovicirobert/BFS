@@ -53,7 +53,6 @@ static short goodNodes[MAXN];
 int size;
 
 static char startPoint[MAXN];
-short maxGoodNode;
 
 inline int min(int a, int b) {
 	return a < b ? a : b;
@@ -91,7 +90,6 @@ static inline void ReadInput() {
 	for(int i = 0; i <= n; ++i) {
 		if(degree[i] && degree_rev[i]) {
 			goodNodes[size++] = i;
-			maxGoodNode = i;
 		}
 	}
 	for(int i = 1; i <= n + 1; ++i) {
@@ -147,29 +145,29 @@ void Solve(int beg, int end) {
 
 	float G[MAXN];
 
-	for(short s = beg; s <= end; ++s) {
+	for(int s = beg; s <= end; ++s) {
 
 		if(!startPoint[s]) continue;
 		
 		memset(dist, 0, sizeof(unsigned char) * (n + 1));
 
-		short l = 0, r = 1;
+		int l = 0, r = 1;
 
 		Q[0] = s;
 		dist[s] = ways0[s] = 1;
 
-		short sz = 1;
+		int sz = 1;
 
 		memset(last, 0, sizeof(unsigned short) * (n + 1));
 
 		while(l < r) {
-			const short nod = Q[l++];
+			const int nod = Q[l++];
 			if(ways0[nod] > INF) {
 				continue;
 			}
-			for(short i = degree[nod]; i < degree[nod + 1]; ++i) {
-				const short nei = edges[i];
-				const short dst = dist[nod] + 1;
+			for(int i = degree[nod]; i < degree[nod + 1]; ++i) {
+				const int nei = edges[i];
+				const int dst = dist[nod] + 1;
 
 				if(!dist[nei]) {
 					Q[r++] = nei;
@@ -192,14 +190,14 @@ void Solve(int beg, int end) {
 		}
 
 		if(size < r) {
-			memset(G, 0, sizeof(float) * (maxGoodNode + 1));
+			memset(G, 0, sizeof(float) * (n + 1));
 		}
 
-		for(short i = r - 1; i >= 1; --i) {
-			const short v = Q[i];
+		for(int i = r - 1; i >= 1; --i) {
+			const int v = Q[i];
 			float sum = 0;
 			
-			short pos = last[v];
+			int pos = last[v];
 			while(pos) {
 				sum += ways1[node[pos]];
 				pos = nxt[pos];
@@ -213,14 +211,14 @@ void Solve(int beg, int end) {
 		mtx.lock();
 		{
 			if(size < r) {
-				for(short i = 0; i < size; ++i) {
-					const short nod = goodNodes[i];
+				for(int i = 0; i < size; ++i) {
+					const int nod = goodNodes[i];
 					g[nod] += G[nod];
 				}
 			}
 			else {
-				for(short i = 1; i < r; ++i) {
-					const short nod = Q[i];
+				for(int i = 1; i < r; ++i) {
+					const int nod = Q[i];
 					g[nod] += G[nod];
 				}	
 			}
